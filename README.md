@@ -1,6 +1,6 @@
 # CARLA .sif Image Builds
 
-This repository provides instructions and definition files for building Singularity `.sif` images for various CARLA components using `.def` files.
+This repository provides instructions and definition files for building Apptainer `.sif` images for various CARLA components using `.def` files.
 
 ## Overview
 
@@ -40,10 +40,10 @@ CARLA `.def` files are required to build `.sif` images. This README outlines how
    cd carla-common
    ```
 2. Ensure `client.def` is in the project root (customize base image and dependencies as needed).
-3. Build the Singularity image:
+3. Build the Apptainer image:
 
    ```bash
-   singularity build client.sif client.def
+   apptainer build client.sif client.def
    ```
 
 ### 2. Server Image
@@ -51,10 +51,10 @@ CARLA `.def` files are required to build `.sif` images. This README outlines how
 Build the CARLA server image by pulling the official Docker container.
 
 1. Place `server.def` in your working directory.
-2. Build the Singularity image:
+2. Build the Apptainer image:
 
    ```bash
-   singularity build server.sif server.def
+   apptainer build server.sif server.def
    ```
 
 Your `server.def` should reference the CARLA Docker image, for example:
@@ -75,11 +75,21 @@ Build the visualization interface from the `carlaviz` repository.
    cd carlaviz
    ```
 2. Ensure `viz.def` is in the repository root, and adjust dependencies if required.
-3. Build the Singularity image:
+3. Build the Apptainer image:
 
    ```bash
-   singularity build viz.sif viz.def
+   apptainer build viz.sif viz.def
    ```
+   
+4. SSH tunel to athena with Carla viz
+Get ip address of node on athena
+   ```bash
+   hostname -i
+   ```
+Use ip address to create tunnel to node
+  ```bash
+  TARGET_IP="<node_ip_address>"; ssh -o ServerAliveInterval=300 -N -L 2000:$TARGET_IP:2000 -L 2001:$TARGET_IP:2001 -L 2002:$TARGET_IP:2002
+  ```
 
 ---
 
