@@ -1,0 +1,180 @@
+Bootstrap: docker
+From: nvidia/cuda:12.4.0-runtime-ubuntu22.04
+
+%labels
+    Author    yourname
+    Version   v1.0
+    GPU_Support   true
+    # Note: This container is built for systems with NVIDIA GPUs.
+    
+%environment
+    # Set local timezone and activate the virtualenv if present
+    export TZ=Europe/Warsaw
+    if [ -f /home/carla/.bashrc ]; then
+        . /home/carla/.bashrc
+    fi
+    # Set CUDA paths so that CUDA binaries and libraries are found
+    export PATH=/usr/local/cuda/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+    # Set default NVIDIA driver capabilities for typical compute/utility usage
+    export NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
+    
+%post
+    export DEBIAN_FRONTEND=noninteractive
+
+    # Prevent systemd installation issues
+    apt-mark hold systemd || true
+    rm -rf /lib/systemd/system /etc/systemd/system || true
+
+    # Install system dependencies
+    apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        clang \
+        cmake \
+        ffmpeg \
+        g++ \
+        gcc \
+        git \
+        libboost-all-dev \
+        libjpeg-dev \
+        libjpeg-turbo8-dev \
+        libpng-dev \
+        libtiff-dev \
+        libxml2-dev \
+        screen \
+        unzip \
+        wget \
+        python3.10 \
+        python3.10-dev \
+        python3.10-venv \
+        python3-pip || true
+
+    # Optionally, install NVIDIA utilities to get nvidia-smi available inside the container.
+    # (The base image should provide these; if not, uncomment the next line and adjust as needed.)
+    # apt-get install -y nvidia-utils-525
+
+    rm -rf /var/lib/apt/lists/*
+
+    # Manually create user (bypassing potential useradd issues)
+    USERNAME=carla
+    USER_ID=1000
+    echo "${USERNAME}:x:${USER_ID}:${USER_ID}:,,,:/home/${USERNAME}:/bin/bash" >> /etc/passwd
+    echo "${USERNAME}:x:${USER_ID}:" >> /etc/group
+    mkdir -p /home/${USERNAME}
+    chown ${USER_ID}:${USER_ID} /home/${USERNAME}
+
+    # Clone the AV repository (branch BK)
+    git clone --branch BK --depth 1 https://github.com/Piotr-Czechowski/AV.git /home/${USERNAME}/AV
+    chown -R ${USER_ID}:${USER_ID} /home/${USERNAME}/AV
+
+    # Create Python virtual environment
+    python3.10 -m venv /home/${USERNAME}/venv
+    chown -R ${USER_ID}:${USER_ID} /home/${USERNAME}/venv
+
+    # Upgrade pip & install dependencies inside virtualenv
+    /home/${USERNAME}/venv/bin/python -m pip install --no-cache-dir -U \
+        pip setuptools wheel
+
+    # Install Carla and its dependencies (and your other requirements)
+    /home/${USERNAME}/venv/bin/python -m pip install --no-cache-dir \
+        carla==0.9.15 \
+        numpy \
+        attrs \
+        backcall \
+        certifi \
+        charset-normalizer \
+        click \
+        colorama \
+        ConfigArgParse \
+        cycler \
+        dash \
+        dash-core-components \
+        dash-html-components \
+        dash-table \
+        decorator \
+        distro \
+        docker-pycreds \
+        fastjsonschema \
+        Flask \
+        fonttools \
+        future \
+        gitdb \
+        GitPython \
+        idna \
+        importlib-metadata \
+        importlib-resources \
+        ipython \
+        ipywidgets \
+        itsdangerous \
+        jedi \
+        Jinja2 \
+        jsonschema \
+        jupyter_core \
+        jupyterlab_widgets \
+        kiwisolver \
+        MarkupSafe \
+        matplotlib \
+        matplotlib-inline \
+        nbformat \
+        nest-asyncio \
+        networkx \
+        opencv-python \
+        packaging \
+        parso \
+        pickleshare \
+        Pillow \
+        pkgutil_resolve_name \
+        platformdirs \
+        plotly \
+        prompt_toolkit \
+        protobuf \
+        psutil \
+        py-cpuinfo \
+        pygame \
+        Pygments \
+        pyparsing \
+        pyrsistent \
+        python-dateutil \
+        requests \
+        retrying \
+        sentry-sdk \
+        setuptools \
+        six \
+        smmap \
+        tenacity \
+        torch \
+        torchaudio \
+        torchvision \
+        traitlets \
+        typing_extensions \
+        urllib3 \
+        wandb \
+        wcwidth \
+        Werkzeug \
+        widgetsnbextension \
+        zipp || true
+
+    # Activate virtualenv automatically for user sessions
+    echo 'source /home/carla/venv/bin/activate' >> /home/${USERNAME}/.bashrc
+
+    # Clean up
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+%files
+    entrypoint.sh   /home/carla/entrypoint.sh
+    client          /home/carla/client
+
+%runscript
+    # Quick check: display NVIDIA GPU info if nvidia-smi is available.
+    if command -v nvidia-smi >/dev/null 2>&1; then
+        echo "NVIDIA GPU detected:"
+        nvidia-smi
+    else
+        echo "WARNING: nvidia-smi not found. Did you forget to run with the '--nv' flag?"
+    fi
+    echo "Launching entrypoint script..."
+    exec /home/carla/entrypoint.sh "$@"
+
+%startscript
+    exec /bin/sh -c "while sleep 1000; do :; done"

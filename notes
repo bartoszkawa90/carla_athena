@@ -1,0 +1,5 @@
+Carla .def files are required to build .sif images from them
+
+ - image for client is created from some project like repo carla-common, and there can be used some specific image to begin with, https://github.com/wielgosz-info/carla-common.git
+ - image for server is created just by pulling docker carla container
+ - image for carla viz is created with repo for carla viz, https://github.com/mjxu96/carlaviz.git

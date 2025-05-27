@@ -1,0 +1,105 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%post
+    # Avoid interactive prompts during package installation
+    export DEBIAN_FRONTEND=noninteractive
+
+    # Update package lists and install essential packages, including gcc-11, g++-11, and libgflags-dev for gflags support
+    apt update && apt install -y --no-install-recommends \
+        make gcc-11 g++-11 cmake git curl npm nginx python3 python3-pip libgflags-dev && \
+        rm -rf /var/lib/apt/lists/*
+    
+    # Set update-alternatives so that gcc and g++ point to version 11
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100
+
+    # Remove potential conflicts from old Node.js packages
+    apt remove -y libnode-dev nodejs npm || true
+    apt autoremove -y
+
+    # Install Node.js 18 explicitly (to match node:18-alpine)
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    apt install -y nodejs
+
+    # Verify Node.js version
+    node -v
+
+    # Install Conan (v1.55.0) and add the GitLab remote registry
+    pip3 install --no-cache-dir conan==1.55.0
+    conan remote add gitlab https://gitlab.com/api/v4/projects/44861904/packages/conan
+
+    # Create necessary working directories
+    mkdir -p /home/carlaviz/frontend /home/carlaviz/backend /home/carlaviz/profiles /home/carlaviz/docker
+
+    # ---------------------
+    # Build Frontend
+    # ---------------------
+    cd /home/carlaviz/frontend
+    npm install -g yarn
+    yarn install
+    # Unset NODE_OPTIONS to avoid possibly problematic flags (like --openssl-legacy-provider)
+    unset NODE_OPTIONS
+    yarn build
+
+    # ---------------------
+    # Build Backend
+    # ---------------------
+    mkdir -p /home/carlaviz/backend/build
+    cd /home/carlaviz/backend/build
+    conan install -pr /home/carlaviz/profiles/gcc11 --build=missing -s build_type=Release ..
+    conan build ..
+
+    # Print build directory structure for diagnostic purposes
+    echo "=== Listing /home/carlaviz/backend/build ==="
+    ls -R /home/carlaviz/backend/build
+
+    # Prepare the directory for the final binary and copy it over.
+    mkdir -p /home/carlaviz/backend/bin
+    if [ -f Release/src/backend ]; then
+        cp Release/src/backend /home/carlaviz/backend/bin/backend
+    elif [ -f src/backend ]; then
+        cp src/backend /home/carlaviz/backend/bin/backend
+    else
+        echo "ERROR: backend binary not found in expected locations!"
+        ls -R .
+        exit 1
+    fi
+
+    # ---------------------
+    # Adjust Nginx Configuration for the Container
+    # ---------------------
+    # Remove the 'user' directive, which is not needed when not running as root
+    sed -i '/^user\s/d' /etc/nginx/nginx.conf
+    # Change error log location to a writable area
+    sed -i 's|/var/log/nginx/error.log|/tmp/nginx_error.log|g' /etc/nginx/nginx.conf
+    # Change the client body temp path to a writable directory
+    sed -i 's|/var/lib/nginx/body|/tmp/nginx_body|g' /etc/nginx/nginx.conf
+    # Create the temporary directory(s)
+    mkdir -p /tmp/nginx_body
+
+    # Set execution permissions on the run script
+    chmod +x /home/carlaviz/docker/run.sh
+
+%files
+    ./frontend                  /home/carlaviz/frontend
+    ./backend                   /home/carlaviz/backend
+    ./misc/cicd/conan/gcc11     /home/carlaviz/profiles/gcc11
+    ./misc/docker/carlaviz      /etc/nginx/conf.d/default.conf
+    ./misc/docker/run.sh        /home/carlaviz/docker/run.sh
+
+%environment
+    export PATH=/home/carlaviz/backend/bin:$PATH
+    export CARLAVIZ_HOME=/home/carlaviz
+    export CC=/usr/bin/gcc
+    export CXX=/usr/bin/g++
+
+%startscript
+    exec /bin/bash /home/carlaviz/docker/run.sh
+
+%runscript
+    exec /bin/bash /home/carlaviz/docker/run.sh
+
+%labels
+    Maintainer carlaviz
+    Version 1.0

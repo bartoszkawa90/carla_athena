@@ -1,0 +1,22 @@
+hostname -i
+
+apptainer exec --nv carla_0.9.15.sif /home/carla/CarlaUE4.sh  -RenderOffScreen -nosound --carla-server &
+
+nohup apptainer exec carlaviz.sif /home/carlaviz/backend/bin/backend > command.log 2>&1 &
+
+lsof -nP -iTCP -sTCP:LISTEN
+
+nohup apptainer exec --nv carla.sif python3 AV/A_to_B_GPU_34/a2c_rgb_try2.py > carla.log 2>&1 &
+
+tail -f -n 500 carla.log 
+
+
+####### MAIN  COMMANDS
+# Carla server
+nohup python3 carla_server.py > server.log 2>&1 &
+# Sprawdzanie servera
+lsof -nP -iTCP -sTCP:LISTEN
+# Carla client
+nohup apptainer exec --nv ../carla_client.sif python3 A_to_B_GPU_34/a2c_rgb_try2.py > client.log 2>&1 &
+# Carla Viz
+nohup apptainer exec carlaviz.sif /home/carlaviz/backend/bin/backend > carlaviz.log 2>&1 &
