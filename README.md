@@ -12,7 +12,7 @@ CARLA `.def` files are required to build `.sif` images. This README outlines how
 
 ## Prerequisites
 
-* [Singularity](https://sylabs.io/docs/) (version 3.0 or later)
+* [Apptainer](https://sylabs.io/docs/) (version 1.3.6 or later)
 * Access to the relevant Git repositories:
 
   * [`carla-common`](https://github.com/wielgosz-info/carla-common.git) (for the client)
@@ -80,28 +80,6 @@ Build the visualization interface from the `carlaviz` repository.
    ```bash
    singularity build viz.sif viz.def
    ```
-
-## Customization
-
-* Modify each `.def` file to change the base OS, install additional libraries, or set environment variables.
-* For GPU support, ensure the host has NVIDIA drivers installed and use the `--nv` flag when running the container.
-
-## Usage Examples
-
-```bash
-# Run the server:
-singularity run --nv server.sif
-
-# Run the client (connecting to a remote server):
-singularity run client.sif --host <server-ip>
-
-# Launch CARLA Viz:
-singularity run viz.sif
-```
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
