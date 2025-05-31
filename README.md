@@ -39,7 +39,7 @@ To build image use: apptainer build <sif file> <def file>
    ```
 4. Example run for client:
 ```
-apptainer exec --nv <path_to_client_image> python3 <path_to_python_script> > <name_of_.log_file> 2>&1 
+apptainer exec --nv <path_to_client_image> python3 <path_to_python_script> <name_of_.log_file> 2>&1 
 ```
 
 ### 2. Server Image
