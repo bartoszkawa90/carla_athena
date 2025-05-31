@@ -1,6 +1,6 @@
 # CARLA .sif Image Builds
 
-This repository provides instructions and definition files for building Apptainer `.sif` images for various CARLA components using `.def` files.
+This repository is about how to run CARLA simulator and experiments on Athena cluster.
 
 ## Overview
 
@@ -25,7 +25,7 @@ CARLA `.def` files are required to build `.sif` images. This README outlines how
 .
 ├── client.def       # Definition file for the CARLA client image
 ├── server.def       # Definition file for the CARLA server image
-├── viz.def          # Definition file for the CARLA Viz image
+├── carlaviz.def          # Definition file for the CARLA Viz image
 └── README.md        # This instruction file
 ```
 
@@ -74,11 +74,11 @@ Build the visualization interface from the `carlaviz` repository.
    git clone https://github.com/mjxu96/carlaviz.git
    cd carlaviz
    ```
-2. Ensure `viz.def` is in the repository root, and adjust dependencies if required.
+2. Ensure `carlaviz.def` is in the repository root, and adjust dependencies if required.
 3. Build the Apptainer image:
 
    ```bash
-   apptainer build viz.sif viz.def
+   apptainer build carlaviz.sif carlaviz.def
    ```
    
 4. SSH tunel to athena with Carla viz
