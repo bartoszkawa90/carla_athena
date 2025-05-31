@@ -20,7 +20,6 @@ To build image use: apptainer build <sif file> <def file>
   * [`carla-common`](https://github.com/wielgosz-info/carla-common.git) (for the client)
   * Official CARLA Docker container (for the server)
   * [`carlaviz`](https://github.com/mjxu96/carlaviz.git) (for the visualization)
-```
 
 ## Building Images
 
