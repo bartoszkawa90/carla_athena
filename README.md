@@ -83,6 +83,22 @@ Use ip address to create tunnel to node. (Ports 8080 and 8081 are required only 
   TARGET_IP="node_ip_address"; ssh -o ServerAliveInterval=300 -N -L 2000:$TARGET_IP:2000 -L 2001:$TARGET_IP:2001 -L 2002:$TARGET_IP:2002 -L 8080:$TARGET_IP:8080 -L 8081:$TARGET_IP:8081 <user_name>@athena.cyfronet.pl 
   ```
 
+### 4. VS Code Server on Athena
+
+Run job which will run vs code server and tunnel so it can be accessed in local vs code app.
+
+1. Run job with sbatch (on athena) : 
+```
+sbatch vscode-server.slurm
+```
+
+2. Check job status until it is 'R' for Running: 
+```
+squeue --me
+```
+
+3. Take ssh command from code-server-log-<JOBID>.txt and create tunnel on local terminal, then connect via local vs code.
+
 ---
 
 
