@@ -13,22 +13,29 @@ tail -f -n 500 carla.log
 ####### MAIN  COMMANDS
 # Carla server
 nohup /net/tscratch/people/plgbartoszkawa/venv/bin/python3 carla_server.py > server.log 2>&1 &
+# Carla server with two subservers
+nohup /net/tscratch/people/plgbartoszkawa/venv/bin/python3 carla_multiserver.py > server.log 2>&1 &
 # Sprawdzanie servera
 lsof -nP -iTCP -sTCP:LISTEN
 # Carla client
 cd AV
-nohup apptainer exec --nv ../carla_client.sif python3 A_to_B_GPU_34/a2c_rgb_try2.py > client.log 2>&1 &
+nohup apptainer exec --nv /net/tscratch/people/plgbartoszkawa/carla_client.sif python3 A_to_B_GPU_34/a2c_rgb_try2.py > client.log 2>&1 &
+nsys --profile -o sciezka-do-outputu python
+
+nohup apptainer exec --nv /net/tscratch/people/plgbartoszkawa/carla_client.sif python3 A_to_B_GPU_34/a3c.py > client_a3c.log 2>&1 &
+
 # Carla Viz
 nohup apptainer exec carlaviz.sif /home/carlaviz/backend/bin/backend > carlaviz.log 2>&1 &
 # SSH Tunnel for also carla viz
-TARGET_IP="172.23.16.11"; ssh -o ServerAliveInterval=300 -N 
-    -L 2000:$TARGET_IP:2000 
-    -L 2001:$TARGET_IP:2001 
-    -L 2002:$TARGET_IP:2002 
-    -L 8080:$TARGET_IP:8080  # port for carlaviz
-    -L 8081:$TARGET_IP:8081  # port for carla viz
-    plgbartoszkawa@athena.cyfronet.pl
+TARGET_IP="172.23.16.11"; ssh -o ServerAliveInterval=300 -N -L 2000:$TARGET_IP:2000 -L 2001:$TARGET_IP:2001 -L 2002:$TARGET_IP:2002 -L 8080:$TARGET_IP:8080 -L 8081:$TARGET_IP:8081 plgbartoszkawa@athena.cyfronet.pl
 # Kill all carla processes
-ps aux | grep '[c]arla' | awk '{print $2}' | xargs kill
+ps aux | grep carla | awk '{print $2}' | xargs kill
+ps aux | grep pyth | awk '{print $2}' | xargs kill
 # Remove all logs from server and client
 rm server_* AV/client_*
+
+# Set the master address to the IPv4 loopback address
+export MASTER_ADDR=127.0.0.1
+
+# You can also explicitly set the port, though 12355 is usually fine
+export MASTER_PORT=12355
