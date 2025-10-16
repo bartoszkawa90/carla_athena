@@ -4,10 +4,10 @@ If any server exits, it gets relaunched after `DELAY` seconds.
 
 PORT MAP
 ────────
-instance 0 → 2000  
-instance 1 → 3000
-instance 2 → 4000
-instance 3 → 5000
+instance 0 → 2000, gpu 0
+instance 1 → 2100, gpu 0
+instance 2 → 2200, gpu 1
+instance 3 → 2300, gpu 2
 """
 
 import multiprocessing as mp
@@ -16,9 +16,14 @@ import signal
 import subprocess
 from time import sleep
 from typing import List
+import torch
 
 
+# MAIN SETTINGS
 NUM_SERVERS: int = 2
+SERVERS_PER_GPU = 2
+
+# COMMON - SHOULD BE GOOD
 CONTAINER_IMAGE: str = (
     "/net/tscratch/people/plgbartoszkawa/carla_0.9.15.sif"
 )
@@ -28,19 +33,15 @@ CARLA_BINARY: List[str] = [
     "-nosound",
     "--carla-server",
 ]
-START_PORT: int = 2000
-PORT_STEP: int = 1000
-DELAY: int = 0.1  # seconds
 
+START_PORT: int = 2000
+PORT_STEP: int = 100
+DELAY: int = 0.1  # seconds
 BASE_CMD: List[str] = ["apptainer", "exec", "--nv", CONTAINER_IMAGE]
 
 # Map instance index → GPU ID (1–4)
-GPU_MAP = {
-    0: 1,
-    1: 2,
-    2: 3,
-    3: 4,
-}
+NUM_GPUS = torch.cuda.device_count()
+GPU_MAP = {i: i // SERVERS_PER_GPU + 1 for i in range(NUM_GPUS)}
 
 
 def supervise(idx: int) -> None:
@@ -86,6 +87,7 @@ def _kill_process_tree(proc: subprocess.Popen) -> None:
 # main
 def main() -> None:
     print(f"Starting {NUM_SERVERS} CARLA servers (first port {START_PORT})")
+    print(f'Using GPU map {GPU_MAP}')
 
     workers: List[mp.Process] = []
     for idx in range(NUM_SERVERS):

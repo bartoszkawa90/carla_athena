@@ -83,7 +83,7 @@ Use ip address to create tunnel to node. (Ports 8080 and 8081 are required only 
   TARGET_IP="node_ip_address"; ssh -o ServerAliveInterval=300 -N -L 2000:$TARGET_IP:2000 -L 2001:$TARGET_IP:2001 -L 2002:$TARGET_IP:2002 -L 8080:$TARGET_IP:8080 -L 8081:$TARGET_IP:8081 <user_name>@athena.cyfronet.pl 
   ```
 
-### 4. VS Code Server on Athena
+### 4. VS Code Server on Athena (Better solution for debugging and )
 
 Run job which will run vs code server and tunnel so it can be accessed in local vs code app.
 
@@ -92,12 +92,18 @@ Run job which will run vs code server and tunnel so it can be accessed in local 
 sbatch vscode-server.slurm
 ```
 
-2. Check job status until it is 'R' for Running: 
+2. Check job status until it is 'R' for Running, if status id SD you have to wait for resources: 
 ```
 squeue --me
 ```
+3. You can cancel job with command: 
+```
+scancel <JOBID>
+```
 
-3. Take ssh command from code-server-log-<JOBID>.txt and create tunnel on local terminal, then connect via local vs code.
+4. Take ssh command from code-server-log-<JOBID>.txt and create tunnel on local terminal, then connect via local vs code.
+You have to copy link to github, go to this site on you local machine and pass code which is in code-server-log-<JOBID>.txt.
+After you authenticate you can connect to JOB Node via tunnel in vs code.
 
 ---
 
