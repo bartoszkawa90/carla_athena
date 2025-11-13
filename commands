@@ -28,9 +28,8 @@ nohup apptainer exec --nv /net/tscratch/people/plgbartoszkawa/carla_client.sif p
 nohup apptainer exec carlaviz.sif /home/carlaviz/backend/bin/backend > carlaviz.log 2>&1 &
 # SSH Tunnel for also carla viz
 TARGET_IP="172.23.16.11"; ssh -o ServerAliveInterval=300 -N -L 2000:$TARGET_IP:2000 -L 2001:$TARGET_IP:2001 -L 2002:$TARGET_IP:2002 -L 8080:$TARGET_IP:8080 -L 8081:$TARGET_IP:8081 plgbartoszkawa@athena.cyfronet.pl
-# Kill all carla processes
-ps aux | grep carla | awk '{print $2}' | xargs kill
-ps aux | grep pyth | awk '{print $2}' | xargs kill
+# Kill all carla processes and python process
+pkill -f 'carla|pyth'
 # Remove all logs from server and client
 rm server_* AV/client_*
 
