@@ -58,11 +58,17 @@ apptainer exec --nv <path_to_carla_image> /home/carla/CarlaUE4.sh -RenderOffScre
 
 4. Ideally use `carla_athena_multiserver_v3.py` where you can choose how many servers you want and how many should work on 
       one GPU.
+
       Script starts servers in separate containers and restart each one individually when server crashes.
+
       Logs are saved to server_logs dir and there each run has its own subdir with log files.
+
       When `ENABLE_DASHBOARD` is true program serves real time resources usage and logs on localhost:5000 in dashboard.
+
       If dashboard does not work, check if generated `templates` dir is in same place as `carla_athena_multiserver_v3.py`, if not move it there.
+      
       Ideally to kill all servers use `pkill -f 'carla|pyth'`.
+
       !!! MAKE SURE YOU HAVE CORRECT PATHS FOR YOUR CASE, PROBABLY PATH TO CARLA IMAGE (.sif file) SHOULD BE ADJUSTED. 
 
 ### 3. CARLA Viz Image
